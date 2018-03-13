@@ -34,5 +34,5 @@ Download the project and then
 
 or make it executable.
 
-The rsnapshot configuration file must define at least one of 'daily', 'weekly' or 'monthlyi' backup intervals.
+The rsnapshot configuration file must define at least one of 'daily', 'weekly' or 'monthly' backup intervals.
 If only some are defined, then choose the right one from the interval combo box below the sync button.
