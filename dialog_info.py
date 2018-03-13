@@ -7,6 +7,7 @@ from utils import icon
 class InfoDialog(QDialog):
     def __init__(self):
         super(InfoDialog, self).__init__()
+        self.translate = QtCore.QCoreApplication.translate
         self.init_ui()
 
     def init_ui(self):
@@ -18,7 +19,7 @@ class InfoDialog(QDialog):
         self.resize(500, 300)
         # window props
         self.setObjectName("Info")
-        self.setWindowTitle('Info')
+        self.setWindowTitle(self.translate('InfoDialog', 'Info'))
 
         main_layout = QVBoxLayout()
         main_layout.setSpacing(20)
@@ -26,7 +27,10 @@ class InfoDialog(QDialog):
         title = QLabel('<h1>Otto Backup - v1.0.0</h1>')
         title.setAlignment(QtCore.Qt.AlignCenter)
         description = QLabel(
-            'Interfaccia per la gestione di backup tramite rsnapshot')
+            self.translate(
+                'InfoDialog',
+                'GUI for the rsnapshot command, manage your backups with ease.'
+            ))
         description.setAlignment(QtCore.Qt.AlignCenter)
         image = QLabel('<img src="%s" />' % icon('icon.png'))
         image.setAlignment(QtCore.Qt.AlignCenter)

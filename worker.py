@@ -21,13 +21,15 @@ class Worker(QtCore.QThread):
         self.settings = settings
         self.dispatcher = Dispatcher.instance()
 
-    def run_backup(self):
+    def run_backup(self, interval):
+        self.interval = interval
         self.start()
 
     def run(self):
         stream = subprocess.Popen(
-            "rsnapshot -vvv -c %s weekly" %
-            self.settings.value('rsnapshot_config_path'),
+            "rsnapshot -vvv -c %s %s" %
+            (self.settings.value('rsnapshot_config_path'),
+             self.interval),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             shell=True)

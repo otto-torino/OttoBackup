@@ -1,122 +1,165 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-@TODO add hourly, daily, weekly settings! as combobox
+Otto Backup
+MIT License
+@author abidibo <abidibo@gmail.com>
+Company Otto srl <https://www.otto.to.it>
 """
 
+import datetime
+import os
 import sys
 
 from PyQt5 import QtCore
-from PyQt5.QtGui import QIcon, QTextCursor, QMovie
-from PyQt5.QtWidgets import (QAction, QApplication, QDesktopWidget,
+from PyQt5.QtGui import QIcon, QMovie, QTextCursor
+from PyQt5.QtWidgets import (QAction, QApplication, QComboBox, QDesktopWidget,
                              QFileDialog, QLabel, QMainWindow, QMessageBox,
-                             QTextEdit, QVBoxLayout, QWidget, )
+                             QTextEdit, QVBoxLayout, QWidget)
 
+from data import ApplicationData
 from dialog_info import InfoDialog
 from dialog_settings import SettingsDialog
-from utils import icon
-from worker import Worker, EmittingStream
 from dispatcher import Dispatcher
+from utils import icon
+from worker import EmittingStream, Worker
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, app):
-        super(MainWindow, self).__init__()
+    """ Main Application Window"""
 
+    def __init__(self, application_data):
+        super(MainWindow, self).__init__()
+        # event dispatcher
         self.dispatcher = Dispatcher.instance()
-        self.app = app
-        self.settings = QtCore.QSettings('app', 'settings')
+        # translations
+        self.translate = QtCore.QCoreApplication.translate
+        # appication data
+        self.application_data = application_data
+        self.interval = 'daily'
+        # application settings
+        self.settings = QtCore.QSettings('OttoBackup', 'settings')
+        # thread which runs rsnapshot
         self.worker = Worker(self.settings)
+        # is rsnapshot still running?
         self.busy = False
 
         # connect to events
         self.dispatcher.error.connect(self.command_error)
         self.dispatcher.command_complete.connect(self.command_complete)
+        self.dispatcher.rsnapshot_config_path_firstset.connect(
+            self.on_rsnapshot_firstset)
 
         # Install the custom output stream
         sys.stdout = EmittingStream(text_written=self.log_command)
 
+        # init ui
         self.init_ui()
+        # check required settings
         self.check_settings()
 
     def closeEvent(self, event):
-        # do stuff
+        """ Do not close the app if rsnapshot is still running """
         if not self.busy:
             event.accept()
         else:
             event.ignore()
             QMessageBox.warning(
                 self, 'Otto Backup',
-                "Il programma sta ancora effettuando operazioni",
+                self.translate("MainWindow",
+                               "The program is still performing operations"),
                 QMessageBox.Ok)
 
     def init_ui(self):
         # styles
-        sshFile = "style.qss"
-        with open(sshFile, "r") as fh:
+        ssh_file = "style.qss"
+        with open(ssh_file, "r") as fh:
             self.setStyleSheet(fh.read())
         # dimensions and positioning
-        self.resize(800, 400)
+        self.resize(800, 500)
         self.center()
         # window props
         self.setWindowTitle('Otto Backup')
         self.setWindowIcon(QIcon(icon('icon.png')))
-        # toolbar
         # settings
         settingsAct = QAction(QIcon(icon('settings-icon.png')), 'Exit', self)
         settingsAct.setShortcut('Ctrl+S')
         settingsAct.triggered.connect(self.open_settings_dialog)
         # info
         infoAct = QAction(QIcon(icon('info-icon.png')), 'Exit', self)
-        infoAct.setShortcut('Ctrl+S')
         infoAct.triggered.connect(self.open_info_dialog)
-
+        # toolbar
         self.toolbar = self.addToolBar('Exit')
         self.toolbar.addAction(settingsAct)
         self.toolbar.addAction(infoAct)
-
         # layout
         self.wid = QWidget(self)
         self.setCentralWidget(self.wid)
         self.main_layout = QVBoxLayout()
+        self.main_layout.setSpacing(20)
         self.init_ui_body()
         self.main_layout.addStretch()
         self.wid.setLayout(self.main_layout)
+        # status bar
+        self.last_sync_message()
 
         # show
         self.show()
 
     def center(self):
+        """ Place the window in the center of the screen """
         qr = self.frameGeometry()
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
     def init_ui_body(self):
+        """ The ui body """
         rsnapshot_config_path = self.settings.value('rsnapshot_config_path')
         if rsnapshot_config_path:
+            # text info (displays rsnapshot output)
             self.text_info = QTextEdit()
             self.text_info.setReadOnly(True)
             self.text_info.setText('ready...')
+            # start button
             self.start_button = QLabel(
                 '<img src="%s" />' % icon('backup-icon.png'))
             self.start_button.mousePressEvent = self.start_backup
-            self.start_button.setAlignment(QtCore.Qt.AlignCenter)
+            self.start_button.setFixedSize(128, 128)
+            # select interval
+            items = ['daily', 'weekly', 'monthly']
+            self.select_interval = QComboBox(self)
+            self.select_interval.addItems(items)
+            self.select_interval.setCurrentIndex(0)
+            self.select_interval.setFixedSize(140, 30)
+            # onchange
+            self.select_interval.activated[str].connect(
+                self.on_change_interval)
+            # noobs description
             self.start_description = QLabel(
-                '<p>Clicca il bottone per iniziare la sincronizzazione</p>')
+                self.translate('MainWindow', '''<p>Select the backup type and
+click the button to start syncing</p>'''))
             self.start_description.setAlignment(QtCore.Qt.AlignCenter)
-
+            # loading icon
             self.loading_movie = QMovie(icon('loader.gif'))
             self.loading = QLabel()
             self.loading.setAlignment(QtCore.Qt.AlignCenter)
             self.loading.setMovie(self.loading_movie)
+            self.loading.setHidden(True)
 
+            # add all the stuff to the layout
             self.main_layout.addWidget(self.start_button)
+            self.main_layout.addWidget(self.select_interval)
             self.main_layout.addWidget(self.start_description)
             self.main_layout.addWidget(self.loading)
             self.main_layout.addWidget(self.text_info)
+            self.main_layout.setAlignment(self.start_button,
+                                          QtCore.Qt.AlignCenter)
+            self.main_layout.setAlignment(self.select_interval,
+                                          QtCore.Qt.AlignCenter)
 
     def check_settings(self):
+        """ rsnapshot conf file settings is required! """
         data = self.settings.value('rsnapshot_config_path')
 
         if data is None:
@@ -132,26 +175,35 @@ class MainWindow(QMainWindow):
                 return
 
     def choose_rsnapshot_config(self):
-        fname = QFileDialog.getOpenFileName(self, 'Open file', '/home')
+        """ dialog to choose rsnapshot conf file """
+        fname = QFileDialog.getOpenFileName(self,
+                                            self.translate(
+                                                'MainWindow', 'Open file'),
+                                            os.path.expanduser('~'))
 
         if fname[0]:
             self.settings.setValue('rsnapshot_config_path', fname[0])
+            self.dispatcher.rsnapshot_config_path_firstset.emit()
 
     def open_settings_dialog(self):
+        """ opens the settings window """
         settings_dialog = SettingsDialog(self.settings)
         settings_dialog.exec_()
 
     def open_info_dialog(self):
+        """ opens the info window """
         info_dialog = InfoDialog()
         info_dialog.exec_()
 
     def start_backup(self, event):
+        """ Starts the backup if not yet busy """
         if not self.busy:
             self.set_busy(True)
             self.text_info.setText('starting rsnapshot backup...\n')
-            self.worker.run_backup()
+            self.worker.run_backup(self.interval)
 
     def log_command(self, text):
+        """ Logs rsnapshot sys.stdout in the text field """
         cursor = self.text_info.textCursor()
         cursor.movePosition(QTextCursor.End)
         cursor.insertText(text)
@@ -159,36 +211,80 @@ class MainWindow(QMainWindow):
         self.text_info.ensureCursorVisible()
 
     def command_error(self, message):
+        """ Used to filter rsnapshot errors and perform actions or display
+            info in some cases """
         if message == 'error-cannot-find-dest':
-            reply = QMessageBox.warning(
-                self, 'Otto Backup',
-                "Si è verificato un errore. Controlla di aver montato l'HD" +
-                " in cui viene salvato il backup.",
-                QMessageBox.Ok)
+            reply = QMessageBox.warning(self, 'Otto Backup',
+                                        self.translate('MainWindow',
+                                                       '''An error occurred.
+Check if the backup destination HD is mounted.'''), QMessageBox.Ok)
             if reply == QMessageBox.Ok:
                 self.text_info.setText('ready...')
 
     def command_complete(self, returncode):
+        """ rsnapshot command complete """
+        self.set_busy(False)
+        # success with or without warnings
         if returncode == 0 or returncode == 2:
+            # save last sync
+            if self.interval == self.settings.value(
+                    'rsnapshot_first_interval'):
+                application_data.store_las_sync(datetime.datetime.utcnow())
+                self.last_sync_message()
+            # show success dialog
             reply = QMessageBox.information(
                 self, 'Otto Backup',
-                "Backup effettuato con successo.",
+                self.translate('MainWindow',
+                               'The backup was successfully executed'),
                 QMessageBox.Ok)
             if reply == QMessageBox.Ok:
                 self.text_info.setText('ready...')
-        self.set_busy(False)
 
     def set_busy(self, busy):
+        """ Is the application busy? """
         if busy:
-            self.loading.show()
+            self.select_interval.setDisabled(True)
+            self.loading.setHidden(False)
             self.loading_movie.start()
         else:
-            self.loading.hide()
+            self.select_interval.setDisabled(False)
+            self.loading.setHidden(True)
             self.loading_movie.stop()
         self.busy = busy
+
+    def on_rsnapshot_firstset(self):
+        """ When rsnapshot conf file is set the first time, the ui
+            body must be redrawn """
+        self.init_ui_body()
+
+    def last_sync_message(self):
+        """ Displays the last sync message in the status bar """
+        last_sync = application_data.get_last_sync()
+        if last_sync:
+            self.statusBar().showMessage(
+                self.translate('MainWindow',
+                               'Last backup: %s' % str(last_sync)))
+
+    def on_change_interval(self, text):
+        """ When the rsnapshot interval is changed """
+        self.interval = text
+
+
+def setup():
+    """ Init folder and files if necessary """
+    application_data = ApplicationData()
+    application_data.setup()
+    return application_data
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    main_window = MainWindow(app)
+    translator = QtCore.QTranslator(app)
+    lc_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), 'i18n',
+        'ottobackup_%s.qm' % QtCore.QLocale.system().name()[:2])
+    translator.load(lc_path)
+    app.installTranslator(translator)
+    application_data = setup()
+    main_window = MainWindow(application_data)
     sys.exit(app.exec_())
