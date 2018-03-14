@@ -14,8 +14,9 @@ import sys
 from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon, QMovie, QTextCursor
 from PyQt5.QtWidgets import (QAction, QApplication, QComboBox, QDesktopWidget,
-                             QFileDialog, QLabel, QMainWindow, QMessageBox,
-                             QTextEdit, QVBoxLayout, QWidget)
+                             QFileDialog, QLabel, QMainWindow, QMenu,
+                             QMessageBox, QSystemTrayIcon, QTextEdit,
+                             QVBoxLayout, QWidget, qApp)
 
 from data import ApplicationData
 from dialog_info import InfoDialog
@@ -81,6 +82,18 @@ class MainWindow(QMainWindow):
         # window props
         self.setWindowTitle('Otto Backup')
         self.setWindowIcon(QIcon(icon('icon.png')))
+        # system tray icon
+        self.tray_icon = QSystemTrayIcon(self)
+        self.tray_icon.setIcon(QIcon(icon('icon.png')))
+        settings_action = QAction(self.translate('MainWindow', 'Settings'), self)
+        settings_action.triggered.connect(self.open_settings_dialog)
+        quit_action = QAction(self.translate('MainWindow', 'Quit'), self)
+        quit_action.triggered.connect(qApp.quit)
+        tray_menu = QMenu()
+        tray_menu.addAction(settings_action)
+        tray_menu.addAction(quit_action)
+        self.tray_icon.setContextMenu(tray_menu)
+        self.tray_icon.show()
         # settings
         settingsAct = QAction(QIcon(icon('settings-icon.png')), 'Exit', self)
         settingsAct.setShortcut('Ctrl+S')
@@ -89,7 +102,7 @@ class MainWindow(QMainWindow):
         infoAct = QAction(QIcon(icon('info-icon.png')), 'Exit', self)
         infoAct.triggered.connect(self.open_info_dialog)
         # toolbar
-        self.toolbar = self.addToolBar('Exit')
+        self.toolbar = self.addToolBar('Toolbar')
         self.toolbar.addAction(settingsAct)
         self.toolbar.addAction(infoAct)
         # layout

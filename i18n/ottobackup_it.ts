@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS><TS version="2.0" language="it" sourcelanguage="en">
+<!DOCTYPE TS>
+<TS version="2.0" language="it" sourcelanguage="en">
 <context>
     <name>InfoDialog</name>
     <message>
@@ -16,32 +17,42 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../ottobackup.py" line="67"/>
+        <location filename="../ottobackup.py" line="68"/>
         <source>The program is still performing operations</source>
         <translation>Il programma sta effettuando delle operazioni</translation>
     </message>
     <message>
-        <location filename="../ottobackup.py" line="139"/>
+        <location filename="../ottobackup.py" line="152"/>
         <source>&lt;p&gt;Select the backup type and
 click the button to start syncing&lt;/p&gt;</source>
         <translation>&lt;p&gt;Seleziona il tipo di backup e clicca il bottone per iniziare la sincronizzazione&lt;/p&gt;</translation>
     </message>
     <message>
-        <location filename="../ottobackup.py" line="179"/>
+        <location filename="../ottobackup.py" line="192"/>
         <source>Open file</source>
         <translation>Apri file</translation>
     </message>
     <message>
-        <location filename="../ottobackup.py" line="217"/>
+        <location filename="../ottobackup.py" line="230"/>
         <source>An error occurred.
 Check if the backup destination HD is mounted.</source>
         <translation>Si è verificato un errore.
 Controlla di aver montato l&apos;HD di destinazione del backup.</translation>
     </message>
     <message>
-        <location filename="../ottobackup.py" line="235"/>
+        <location filename="../ottobackup.py" line="248"/>
         <source>The backup was successfully executed</source>
         <translation>Il backup è stato eseguito con successo</translation>
+    </message>
+    <message>
+        <location filename="../ottobackup.py" line="88"/>
+        <source>Settings</source>
+        <translation>Impostazioni</translation>
+    </message>
+    <message>
+        <location filename="../ottobackup.py" line="90"/>
+        <source>Quit</source>
+        <translation>Esci</translation>
     </message>
 </context>
 <context>
