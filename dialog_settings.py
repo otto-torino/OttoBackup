@@ -5,7 +5,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (QComboBox, QDialog, QFileDialog, QGridLayout,
                              QLabel, QPushButton, QVBoxLayout)
 
-from utils import icon
+from utils import icon, style
 
 
 class SettingsDialog(QDialog):
@@ -17,7 +17,7 @@ class SettingsDialog(QDialog):
 
     def init_ui(self):
         # styles
-        sshFile = "style.qss"
+        sshFile = style()
         with open(sshFile, "r") as fh:
             self.setStyleSheet(fh.read())
         # dimensions and positioning

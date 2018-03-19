@@ -1,7 +1,7 @@
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout
 
-from utils import icon
+from utils import icon, style
 
 
 class InfoDialog(QDialog):
@@ -12,7 +12,7 @@ class InfoDialog(QDialog):
 
     def init_ui(self):
         # styles
-        sshFile = "style.qss"
+        sshFile = style()
         with open(sshFile, "r") as fh:
             self.setStyleSheet(fh.read())
         # dimensions and positioning
