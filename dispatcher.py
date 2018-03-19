@@ -7,5 +7,5 @@ from singleton import Singleton
 class Dispatcher(QtCore.QObject):
     error = QtCore.pyqtSignal(str, name='commandError')
     command_complete = QtCore.pyqtSignal(int, name='commandComplete')
-    rsnapshot_config_path_firstset = QtCore.pyqtSignal(
+    rsnapshot_firstset = QtCore.pyqtSignal(
         name='rsnapshotConfPathFirstSet')

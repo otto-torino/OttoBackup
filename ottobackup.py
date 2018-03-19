@@ -22,7 +22,7 @@ from data import ApplicationData
 from dialog_info import InfoDialog
 from dialog_settings import SettingsDialog
 from dispatcher import Dispatcher
-from utils import icon
+from utils import icon, style
 from worker import EmittingStream, Worker
 
 
@@ -48,7 +48,7 @@ class MainWindow(QMainWindow):
         # connect to events
         self.dispatcher.error.connect(self.command_error)
         self.dispatcher.command_complete.connect(self.command_complete)
-        self.dispatcher.rsnapshot_config_path_firstset.connect(
+        self.dispatcher.rsnapshot_firstset.connect(
             self.on_rsnapshot_firstset)
 
         # Install the custom output stream
@@ -73,7 +73,7 @@ class MainWindow(QMainWindow):
 
     def init_ui(self):
         # styles
-        ssh_file = "style.qss"
+        ssh_file = style()
         with open(ssh_file, "r") as fh:
             self.setStyleSheet(fh.read())
         # dimensions and positioning
@@ -85,7 +85,8 @@ class MainWindow(QMainWindow):
         # system tray icon
         self.tray_icon = QSystemTrayIcon(self)
         self.tray_icon.setIcon(QIcon(icon('icon.png')))
-        settings_action = QAction(self.translate('MainWindow', 'Settings'), self)
+        settings_action = QAction(
+            self.translate('MainWindow', 'Settings'), self)
         settings_action.triggered.connect(self.open_settings_dialog)
         quit_action = QAction(self.translate('MainWindow', 'Quit'), self)
         quit_action.triggered.connect(qApp.quit)
@@ -173,12 +174,25 @@ click the button to start syncing</p>'''))
 
     def check_settings(self):
         """ rsnapshot conf file settings is required! """
-        data = self.settings.value('rsnapshot_config_path')
+        bin = self.settings.value('rsnapshot_bin_path')
+        conf = self.settings.value('rsnapshot_config_path')
 
-        if data is None:
+        if bin is None:
             reply = QMessageBox.warning(
                 self, 'Otto Backup',
-                "Devi selezionare il file di configurazione per rsnapshot!",
+                self.translate('MainWindow', 'You must configure the rsnapshot bin path'),
+                QMessageBox.Ok, QMessageBox.Abort)
+
+            if reply == QMessageBox.Ok:
+                self.choose_rsnapshot_bin()
+            else:
+                sys.exit()
+                return
+
+        if conf is None:
+            reply = QMessageBox.warning(
+                self, 'Otto Backup',
+                self.translate('MainWindow', 'You must configure the rsnaphot configuration path'),
                 QMessageBox.Ok, QMessageBox.Abort)
 
             if reply == QMessageBox.Ok:
@@ -196,7 +210,20 @@ click the button to start syncing</p>'''))
 
         if fname[0]:
             self.settings.setValue('rsnapshot_config_path', fname[0])
-            self.dispatcher.rsnapshot_config_path_firstset.emit()
+            if self.settings.value('rsnapshot_bin_path'):
+                self.dispatcher.rsnapshot_firstset.emit()
+
+    def choose_rsnapshot_bin(self):
+        """ dialog to choose rsnapshot bin file """
+        fname = QFileDialog.getOpenFileName(self,
+                                            self.translate(
+                                                'MainWindow', 'Open file'),
+                                            os.path.expanduser('~'))
+
+        if fname[0]:
+            self.settings.setValue('rsnapshot_bin_path', fname[0])
+            if self.settings.value('rsnapshot_conf_path'):
+                self.dispatcher.rsnapshot_firstset.emit()
 
     def open_settings_dialog(self):
         """ opens the settings window """

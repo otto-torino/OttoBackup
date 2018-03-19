@@ -1,6 +1,15 @@
 import os
+import sys
+
+if getattr(sys, 'frozen', False):
+    bundle_dir = sys._MEIPASS
+else:
+    bundle_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 def icon(name):
-    app_dir = os.path.dirname(os.path.realpath(__file__))
-    return app_dir + os.path.sep + 'assets' + os.path.sep + name
+    return bundle_dir + os.path.sep + 'assets' + os.path.sep + name
+
+
+def style():
+    return bundle_dir + os.path.sep + 'style.qss'

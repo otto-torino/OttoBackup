@@ -13,6 +13,9 @@ class EmittingStream(QtCore.QObject):
     def write(self, text):
         self.text_written.emit(str(text))
 
+    def flush(self):
+        pass
+
 
 class Worker(QtCore.QThread):
     def __init__(self, settings, parent=None):
@@ -27,32 +30,39 @@ class Worker(QtCore.QThread):
 
     def run(self):
         stream = subprocess.Popen(
-            "rsnapshot -vvv -c %s %s" %
-            (self.settings.value('rsnapshot_config_path'),
-             self.interval),
+            "%s -vvv -c %s %s" % (self.settings.value('rsnapshot_bin_path'),
+                                  self.settings.value('rsnapshot_config_path'),
+                                  self.interval),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            shell=True)
+            shell=True,
+            universal_newlines=True)
 
         # output, error = stream.communicate()
         while True:
-            line = stream.stdout.readline(
-            )  # .replace('\r', '').replace('\n', '')
-            if line != '':
-                print line.rstrip()
-            else:
-                break
+            try:
+                line = stream.stdout.readline(
+                )  # .replace('\r', '').replace('\n', '')
+                if line != '':
+                    print(line.decode('utf-8').rstrip())
+                else:
+                    break
+            except UnicodeDecodeError:
+                print('unicode decode error')
 
         while True:
-            line = stream.stderr.readline()
-            if line != '':
-                # the real code does filtering here
-                if re.search(r'rsnapshot refuses to create snapshot_root',
-                             line) is not None:
-                    self.dispatcher.error.emit('error-cannot-find-dest')
-                print line.rstrip()
-            else:
-                break
+            try:
+                line = stream.stderr.readline()
+                if line != '':
+                    # the real code does filtering here
+                    if re.search(r'rsnapshot refuses to create snapshot_root',
+                                 line) is not None:
+                        self.dispatcher.error.emit('error-cannot-find-dest')
+                    print(line.rstrip())
+                else:
+                    break
+            except UnicodeDecodeError:
+                print('unicode decode error')
 
         while True:
             poll = stream.poll()

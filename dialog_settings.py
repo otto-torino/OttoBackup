@@ -29,8 +29,17 @@ class SettingsDialog(QDialog):
         main_layout = QVBoxLayout()
 
         # rsnapshot configuration
-        r_conf_title = QLabel('rsnapshot')
-        r_conf_title.setProperty('labelClass', 'settingsTitle')
+        r_title = QLabel('rsnapshot')
+        r_title.setProperty('labelClass', 'settingsTitle')
+        # rsnapshot path
+        r_bin_label = QLabel(
+            self.translate('SettingsDialog', 'rsnapshot bin path'))
+        r_bin_label.setProperty('labelClass', 'settingsLabel')
+        self.r_bin_value = QLabel(
+            self.settings.value('rsnapshot_bin_path'))
+        self.r_bin_value.setProperty('labelClass', 'settingsValue')
+        r_bin_edit = QPushButton(QIcon(icon('edit-icon.png')), '')
+        r_bin_edit.clicked.connect(self.choose_rsnapshot_bin)
         # rsnapshot configuration path
         r_conf_label = QLabel(
             self.translate('SettingsDialog', 'rsnapshot configuration file'))
@@ -56,12 +65,15 @@ class SettingsDialog(QDialog):
 
         grid = QGridLayout()
 
-        grid.addWidget(r_conf_title, 1, 0)
-        grid.addWidget(r_conf_label, 2, 0)
-        grid.addWidget(self.r_conf_value, 2, 1)
-        grid.addWidget(r_conf_edit, 2, 2)
-        grid.addWidget(r_first_interval_label, 3, 0)
-        grid.addWidget(r_first_interval_value, 3, 1)
+        grid.addWidget(r_title, 1, 0)
+        grid.addWidget(r_bin_label, 2, 0)
+        grid.addWidget(self.r_bin_value, 2, 1)
+        grid.addWidget(r_bin_edit, 2, 2)
+        grid.addWidget(r_conf_label, 3, 0)
+        grid.addWidget(self.r_conf_value, 3, 1)
+        grid.addWidget(r_conf_edit, 3, 2)
+        grid.addWidget(r_first_interval_label, 4, 0)
+        grid.addWidget(r_first_interval_value, 4, 1)
 
         main_layout.addLayout(grid)
         main_layout.addStretch()
@@ -80,8 +92,19 @@ class SettingsDialog(QDialog):
             self.settings.setValue('rsnapshot_config_path', fname[0])
             self.refresh()
 
+    def choose_rsnapshot_bin(self):
+        fname = QFileDialog.getOpenFileName(self,
+                                            self.translate(
+                                                'SettingsDialog', 'Open file'),
+                                            os.path.expanduser('~'))
+
+        if fname[0]:
+            self.settings.setValue('rsnapshot_bin_path', fname[0])
+            self.refresh()
+
     def on_select_first_interval(self, text):
         self.settings.setValue('rsnapshot_first_interval', text)
 
     def refresh(self):
         self.r_conf_value.setText(self.settings.value('rsnapshot_config_path'))
+        self.r_bin_value.setText(self.settings.value('rsnapshot_bin_path'))
