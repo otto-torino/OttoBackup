@@ -19,9 +19,21 @@ rsnapshot gui:
 - report success and save last sync datetime
 - it and en locales provided
 
+## Run on Mac OSX
+
 The packaged Mac OSX app is included:
 
 `dist/osx/OttoBacup.app`
+
+It requires some stuff, though:
+
+- install [homebrew](https://brew.sh/)
+- install rsnapshot:    
+  `$ brew install rsnapshot`
+- install a package whici provides `cp` command with linux like options:    
+  `$ brew install coreutils`
+
+Make sure to set the right binaries path in the `rsnapshot.conf` file (use `which BINARY_NAME` in a terminal to find them)
 
 ## Settings
 
@@ -32,6 +44,14 @@ launches rsnapshot which manages all the backup stuff
 - rsnapshot first interval: needed in order to save the last backup datetime. rsnapshot will fetch remote
 contents only when performing the first interval, while when performing the other intervals, it will create symlink to
 existing directories.
+
+### rsnapshot confiiguration file
+
+OttoBackup will not let you interact with the rsnapshot command, so it is necessary to use the `ssh_args` options and set a private ssh key, i.e.:
+
+    ssh_args	-i /home/user/.ssh/id_rsa
+
+Obviously the pub key must be enabled on the remote server and associated to the user which will perform the backup.
 
 ## Usage
 
