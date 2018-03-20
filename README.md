@@ -10,6 +10,7 @@ A PyQt5 application which acts as an interface to rsnapshot.
 
 rsnapshot gui:
 
+- select the rsnapshot bin
 - select the rsnapshot config
 - set the first rsnapshot interval
 - run the backup
@@ -18,8 +19,14 @@ rsnapshot gui:
 - report success and save last sync datetime
 - it and en locales provided
 
+The packaged Mac OSX app is included:
+
+`dist/osx/OttoBacup.app`
+
 ## Settings
 
+- rsnapshot bin path: needed because when packaging the application with pyinstaller the environment is not the same as running
+through python interpreter and commands are not found if not with absolute path
 - rsnapshot configuration file: needed because it is the source if truth, this application just
 launches rsnapshot which manages all the backup stuff
 - rsnapshot first interval: needed in order to save the last backup datetime. rsnapshot will fetch remote
