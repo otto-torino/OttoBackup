@@ -22,7 +22,7 @@ from data import ApplicationData
 from dialog_info import InfoDialog
 from dialog_settings import SettingsDialog
 from dispatcher import Dispatcher
-from utils import icon, style
+from utils import icon, style, bundle_dir
 from worker import EmittingStream, Worker
 
 
@@ -321,7 +321,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     translator = QtCore.QTranslator(app)
     lc_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), 'i18n',
+        bundle_dir, 'i18n',
         'ottobackup_%s.qm' % QtCore.QLocale.system().name()[:2])
     translator.load(lc_path)
     app.installTranslator(translator)

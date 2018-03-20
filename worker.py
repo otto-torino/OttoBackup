@@ -44,7 +44,7 @@ class Worker(QtCore.QThread):
                 line = stream.stdout.readline(
                 )  # .replace('\r', '').replace('\n', '')
                 if line != '':
-                    print(line.decode('utf-8').rstrip())
+                    print(line.rstrip())
                 else:
                     break
             except UnicodeDecodeError:
