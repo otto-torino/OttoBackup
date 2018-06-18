@@ -1,0 +1,21 @@
+QLabel[labelClass="settingsTitle"] {
+    color: black;
+    font-weight: bold;
+}
+
+QLabel[labelClass="settingsLabel"] {
+    background-color: #eee;
+    color: black;
+    padding: 10;
+}
+
+QLabel[labelClass="settingsValue"] {
+    background-color: #fff;
+    color: black;
+    padding: 10;
+}
+
+QTextEdit {
+    background-color: #111;
+    color: #fff;
+}
